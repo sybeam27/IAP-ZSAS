@@ -1,6 +1,6 @@
 # IAP-AS: Zero-Shot Industrial Anomaly Segmentation with Image-Aware Prompt Generation
 Zero-Shot Anomaly Segmentation by IAP-AS, a model designed to detect anomalies in industrial images, precisely identify their locations, and restore abnormal images to normal using LLM prompting and zero-shot segmentation techniques. 
-![framework](./figures/figure3.jpg)
+![framework](./figures/fig. 2.pdf)
 
 ## Requirements & Setup
 This codebase utilizes Anaconda for managing environmental dependencies. Please follow these steps to set up the environment:
