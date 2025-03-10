@@ -45,7 +45,8 @@ from SegmentAnything.utils.training_utils import *
 from utils.function import load_image, load_model, normalize, setup_seed, eval_zsas_last, \
     process_object_output, process_box_output, process_size_output, \
     process_anomaly_segmentation, process_draw_boxes, process_draw_masks, \
-    process_specify_resolution, process_anomaly_tags_2, get_anomaly_number, convert_bmp_to_png
+    process_specify_resolution, process_anomaly_tags_2, get_anomaly_number, convert_bmp_to_png, \
+    get_paths, get_main_names, process_good_phrases, get_image_and_gt_paths
 
 # ArgumentParser 
 parser = argparse.ArgumentParser(description='Description of your program')

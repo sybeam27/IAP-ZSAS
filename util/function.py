@@ -1504,3 +1504,203 @@ def unique_words_list(strings):
         unique_strings += unique_words
 
     return list(set(unique_strings))
+
+def get_main_names(dataset_name):
+    folder_path = f'../IAP-AS/datasets/{dataset_name}/'
+    if dataset_name == 'mvtec':
+        folder_mvtec_path = f'../IAP-AS/datasets/{dataset_name}_anomaly_detection/'
+        return folder_mvtec_path, sorted([item for item in os.listdir(folder_mvtec_path) if os.path.isdir(os.path.join(folder_mvtec_path, item))])
+    elif dataset_name == 'VisA':
+        return folder_path,  sorted([item for item in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, item)) and not item.startswith('split')])
+    elif dataset_name == 'mtd':
+        return folder_path,  ['Magnetic']
+    elif dataset_name == 'KSDD':
+        folder_ksdd_path = '../IAP-AS/datasets/kolektaorsdd/'
+        return folder_ksdd_path,  sorted([item for item in os.listdir(folder_ksdd_path) if os.path.isdir(os.path.join(folder_ksdd_path, item))])
+    elif dataset_name == 'KSDD2':
+        return folder_path,  ['test']
+    elif dataset_name in ['WFDD', 'MPDD', 'DTD-Synthetic']:
+        return folder_path,  sorted([item for item in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, item))])
+    elif dataset_name == 'DAGM':
+        folder_dagm_path = f'../IAP-AS/datasets/{dataset_name}_KaggleUpload/'
+        return folder_dagm_path,  sorted([item for item in os.listdir(folder_dagm_path) if os.path.isdir(os.path.join(folder_dagm_path, item))])
+    elif dataset_name == 'btad':
+        folder_btad_path = f'../IAP-AS/datasets/{dataset_name}/BTech_Dataset_transformed/'
+        return folder_btad_path, sorted([item for item in os.listdir(folder_btad_path) if os.path.isdir(os.path.join(folder_btad_path, item))])    
+    else:
+        raise ValueError(f"Unsupported dataset: {dataset_name}")
+
+def get_paths(dataset_name, main_name):
+    base_path = '../IAP-AS/datasets'
+    good_folder_path = None
+    folder_path = None
+    sub_names = None
+
+    if dataset_name == 'mvtec':
+        good_folder_path = f'{base_path}/{dataset_name}_anomaly_detection/{main_name}/test/good'
+        folder_path = f'{base_path}/{dataset_name}_anomaly_detection/{main_name}/test'
+        sub_names = os.listdir(folder_path)
+    elif dataset_name == 'VisA':
+        good_folder_path = f'{base_path}/{dataset_name}/{main_name}/Data/Images/Normal'
+        folder_path = f'{base_path}/{dataset_name}/{main_name}/Data/Images'
+        sub_names = os.listdir(folder_path)
+    elif dataset_name == 'mtd':
+        good_folder_path = f'{base_path}/Magnetic-tile-defect-datasets./Magnetic/MT_Free/Imgs'
+        folder_path = f'{base_path}/Magnetic-tile-defect-datasets./{main_name}'
+        sub_names = sorted([item for item in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, item)) and item != '.git'])
+    elif dataset_name == 'KSDD':
+        folder_path = f'{base_path}/kolektaorsdd/{main_name}'
+        sub_names = sorted([os.path.splitext(file)[0] for file in os.listdir(folder_path) if file.lower().endswith('.jpg')])
+    elif dataset_name == 'KSDD2':
+        folder_path = f'{base_path}/KolektorSDD2/{main_name}'
+        sub_names = sorted(list(set(f[:5] for f in os.listdir(folder_path))))
+    elif dataset_name in ['WFDD', 'MPDD', 'DTD-Synthetic']:
+        good_folder_path = f'{base_path}/{dataset_name}/{main_name}/train/good'
+        folder_path = f'{base_path}/{dataset_name}/{main_name}/test'
+        sub_names = os.listdir(folder_path)
+    elif dataset_name == 'DAGM':
+        good_folder_path = f'{base_path}/{dataset_name}_KaggleUpload/{main_name}/'
+        folder_path = f'{base_path}/{dataset_name}_KaggleUpload/{main_name}/'
+        sub_names = os.listdir(folder_path)
+    elif dataset_name == 'btad':
+        good_folder_path = f'{base_path}/{dataset_name}/BTech_Dataset_transformed/{main_name}/train/ok'
+        folder_path = f'{base_path}/{dataset_name}/BTech_Dataset_transformed/{main_name}/test'
+        sub_names = ['ko']
+    else:
+        raise ValueError(f"Unsupported dataset: {dataset_name}")
+
+    return good_folder_path, folder_path, sub_names
+
+def process_good_phrases(dataset_name, good_folder_path, sub_names, random_num, main_name, ram_model, grounding_dino_model, box_threshold, text_threshold, iou_threshold, DEVICE):
+    """
+    Processes good images for different datasets and returns phrases and scores.
+
+    Args:
+        dataset_name (str): Name of the dataset.
+        good_folder_path (str): Path to the folder containing good images.
+        sub_names (list): List of subdirectories or file names.
+        random_num (int): Number of samples to process.
+        ram_model: RAM model instance.
+        grounding_dino_model: Grounding Dino model instance.
+        box_threshold (float): Box threshold.
+        text_threshold (float): Text threshold.
+        iou_threshold (float): IOU threshold.
+        DEVICE (str): Device to use for inference.
+
+    Returns:
+        tuple: good_phrases, good_scores
+    """
+    good_phrases, good_scores = [], []
+
+    if dataset_name in ['mvtec', 'VisA', 'WFDD', 'MPDD', 'DTD-Synthetic', 'btad']:
+        file_extension = '.png' if dataset_name in ['mvtec', 'WFDD', 'MPDD', 'DTD-Synthetic', 'btad'] else '.JPG'
+        files = sorted([file for file in os.listdir(good_folder_path) if file.endswith(file_extension)])
+        for sub_number in random.sample(files, min(random_num, len(files))):
+            good_path = os.path.join(good_folder_path, sub_number)
+            process_single_image(good_path, ram_model, grounding_dino_model, box_threshold, text_threshold, iou_threshold, DEVICE, good_phrases, good_scores)
+
+    elif dataset_name == 'mtd':
+        files = sorted([file for file in os.listdir(good_folder_path) if file.endswith('.jpg')])
+        for sub_number in random.sample(files, min(random_num, len(files))):
+            good_path = os.path.join(good_folder_path, sub_number)
+            process_single_image(good_path, ram_model, grounding_dino_model, box_threshold, text_threshold, iou_threshold, DEVICE, good_phrases, good_scores)
+
+    elif dataset_name == 'KSDD':
+        with open(f'../IAP-AS/datasets/kolektaorsdd/kolektaorsdd_anomaly.json', 'r') as json_file:
+            number_data = json.load(json_file)  
+            anomaly_number = get_anomaly_number(number_data, main_name)
+        for sub_name in random.sample(sub_names, min(random_num, len(sub_names))):
+            if sub_name not in anomaly_number:
+                good_path = os.path.join(f'../IAP-AS/datasets/kolektaorsdd/{main_name}/{sub_name}.jpg')
+                process_single_image(good_path, ram_model, grounding_dino_model, box_threshold, text_threshold, iou_threshold, DEVICE, good_phrases, good_scores)
+
+    elif dataset_name == 'KSDD2':
+        idx_ksdd2 = 0
+        for sub_name in random.sample(sub_names, len(sub_names)):
+            test_path = f'../IAP-AS/datasets/KolektorSDD2/{main_name}/{sub_name}_GT.png'
+            test_gt = cv2.imread(test_path, cv2.IMREAD_GRAYSCALE)
+            if test_gt.sum() <= 0:
+                good_path = f'../IAP-AS/datasets/KolektorSDD2/{main_name}/{sub_name}.png'
+                process_single_image(good_path, ram_model, grounding_dino_model, box_threshold, text_threshold, iou_threshold, DEVICE, good_phrases, good_scores)
+                idx_ksdd2 += 1
+            if idx_ksdd2 == random_num:
+                break
+
+    elif dataset_name == 'DAGM':
+        for sub_name in sub_names:
+            label_folder = os.path.join(good_folder_path, sub_name, 'Label')
+            files = sorted([file for file in os.listdir(label_folder) if file.endswith('.PNG')])
+            for sub_number in random.sample(files, min(random_num, len(files))):
+                sub_number = sub_number.split('_')[0] + '.PNG'
+                good_path = os.path.join(good_folder_path, sub_name, sub_number)
+                process_single_image(good_path, ram_model, grounding_dino_model, box_threshold, text_threshold, iou_threshold, DEVICE, good_phrases, good_scores)
+
+    return good_phrases, good_scores
+
+
+def process_single_image(good_path, ram_model, grounding_dino_model, box_threshold, text_threshold, iou_threshold, DEVICE, good_phrases, good_scores):
+    """
+    Processes a single image and appends results to good_phrases and good_scores.
+
+    Args:
+        good_path (str): Path to the good image.
+        ram_model: RAM model instance.
+        grounding_dino_model: Grounding Dino model instance.
+        box_threshold (float): Box threshold.
+        text_threshold (float): Text threshold.
+        iou_threshold (float): IOU threshold.
+        DEVICE (str): Device to use for inference.
+        good_phrases (list): List to append phrases.
+        good_scores (list): List to append scores.
+    """
+    img, _, raw_img, ram_img, _, _, _ = load_image(good_path, good_path)
+    res = inference_ram(ram_img.to(DEVICE), ram_model)
+    img_tags = res[0].strip(' ').replace('  ', ' ').replace(' |', '.').replace('close-up', '').replace('number. ', '')
+    _, good_phrase, good_score, _ = process_object_output(grounding_dino_model, img, img_tags, box_threshold, text_threshold, raw_img, iou_threshold, DEVICE)
+    good_phrases += good_phrase
+    good_scores += good_score
+
+def get_image_and_gt_paths(dataset_name, main_name, sub_name, sub_number):
+    """
+    Returns the image and ground truth paths based on the dataset, sub_name, and sub_number.
+
+    Args:
+        dataset_name (str): The name of the dataset.
+        main_name (str): Main name for the dataset.
+        sub_name (str): Subfolder name.
+        sub_number (str): The identifier of the file.
+
+    Returns:
+        tuple: (img_path, gt_path)
+    """
+    base_path = '../IAP-AS/datasets'
+    if dataset_name == 'mvtec':
+        img_path = f'{base_path}/{dataset_name}_anomaly_detection/{main_name}/test/{sub_name}/{sub_number}.png'
+        gt_path = img_path if sub_name == 'good' else f'{base_path}/{dataset_name}_anomaly_detection/{main_name}/ground_truth/{sub_name}/{sub_number}_mask.png'
+    elif dataset_name == 'VisA':
+        img_path = f'{base_path}/{dataset_name}/{main_name}/Data/Images/{sub_name}/{sub_number}.JPG'
+        gt_path = img_path if sub_name == 'Normal' else f'{base_path}/{dataset_name}/{main_name}/Data/Masks/{sub_name}/{sub_number}.png'
+    elif dataset_name == 'mtd':
+        img_path = f'{base_path}/Magnetic-tile-defect-datasets./{main_name}/{sub_name}/Imgs/{sub_number}.jpg'
+        gt_path = f'{base_path}/Magnetic-tile-defect-datasets./{main_name}/{sub_name}/Imgs/{sub_number}.png'
+    elif dataset_name == 'KSDD':
+        img_path = f'{base_path}/kolektaorsdd/{main_name}/{sub_name}.jpg'
+        gt_path = f'{base_path}/kolektaorsdd/{main_name}/{sub_name}_label.png'
+    elif dataset_name == 'KSDD2':
+        img_path = f'{base_path}/KolektorSDD2/{main_name}/{sub_name}.png'
+        gt_path = f'{base_path}/KolektorSDD2/{main_name}/{sub_name}_GT.png'
+    elif dataset_name in ['WFDD', 'MPDD', 'DTD-Synthetic']:
+        img_path = f'{base_path}/{dataset_name}/{main_name}/test/{sub_name}/{sub_number}.png'
+        gt_path = f'{base_path}/{dataset_name}/{main_name}/ground_truth/{sub_name}/{sub_number}_mask.png'
+    elif dataset_name == 'DAGM':
+        img_path = f'{base_path}/{dataset_name}_KaggleUpload/{main_name}/{sub_name}/{sub_number}.PNG'
+        gt_path = f'{base_path}/{dataset_name}_KaggleUpload/{main_name}/{sub_name}/Label/{sub_number}_label.PNG'
+        if not os.path.exists(gt_path):
+            gt_path = None
+    elif dataset_name == 'btad':
+        img_path = f'{base_path}/{dataset_name}/BTech_Dataset_transformed/{main_name}/test/{sub_name}/{sub_number}.png'
+        gt_path = f'{base_path}/{dataset_name}/BTech_Dataset_transformed/{main_name}/ground_truth/{sub_name}/{sub_number}.png'
+    else:
+        raise ValueError(f"Unsupported dataset: {dataset_name}")
+
+    return img_path, gt_path
