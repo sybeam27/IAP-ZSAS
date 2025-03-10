@@ -29,7 +29,8 @@ This will set up the environment required to run the codebase.
 Below are the details and download links for datasets used in our experiments:
 
 [Dataset details]
-Each dataset should be stored in a folder named after the dataset (e.g., MVTec-AD/, MPDD/, BTAD/, etc.).
+
+All datasets should be stored in the datasets folder, with each dataset placed in a subfolder named after the dataset (e.g., datasets/MVTec-AD/, datasets/MPDD/, datasets/BTAD/, etc.).
 
 1. **MVTec-AD** [(Download)](https://www.mvtec.com/downloads): The MVTec AD dataset comprises approximately 5,000 images across 15 classes, including texture-related categories such as fabric and wood.
 2. **MPDD** [(Download)](https://github.com/stepanje/MPDD): MPDD is a dataset designed for visual defect detection in metal part manufacturing. It contains over 1,000 images.
