@@ -30,7 +30,7 @@ Below are the details and download links for datasets used in our experiments:
 
 [Dataset details]
 
-All datasets should be stored in the `datasets` folder, with each dataset placed in a subfolder named after the dataset (e.g., `datasets/MVTec-AD/`, `datasets/MPDD/`, `datasets/BTAD/`, etc.).
+All datasets should be stored in the `datasets` folder, with each dataset placed in a subfolder named after the dataset (e.g., `datasets/MPDD/`, `datasets/btad/`, etc.).
 
 1. **MVTec-AD** [(Download)](https://www.mvtec.com/downloads): The MVTec AD dataset comprises approximately 5,000 images across 15 classes, including texture-related categories such as fabric and wood.
 2. **MPDD** [(Download)](https://github.com/stepanje/MPDD): MPDD is a dataset designed for visual defect detection in metal part manufacturing. It contains over 1,000 images.
@@ -43,7 +43,7 @@ All datasets should be stored in the `datasets` folder, with each dataset placed
 These datasets provide valuable resources for our experiments and each known for their high-resolution, texture-rich images that are well-suited for industrial anomaly segmentation.
 
 ## Zero-Shot Anomaly Segmentation (ZSAS) TEST
-Replace `<dataset>` with one of the following options: `mvtec`, `ksdd`, `mtd`.
+Replace `<dataset>` with one of the following options: `mvtec`, `MPDD`, `btad`, `KSDD`, `mtd`, `DTD-Synthetic`, `DAGM`.
 
 Replace `<model>` with one of the following options: `base`, `iap_zsas`.
 
