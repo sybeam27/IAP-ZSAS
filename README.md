@@ -27,6 +27,9 @@ This will set up the environment required to run the codebase.
 
 ## Datasets
 Below are the details and download links for datasets used in our experiments:
+[Dataset details]
+Each dataset should be stored in a folder named after the dataset (e.g., MVTec-AD/, MPDD/, BTAD/, etc.).
+
 1. **MVTec-AD** [(Download)](https://www.mvtec.com/downloads): The MVTec AD dataset comprises approximately 5,000 images across 15 classes, including texture-related categories such as fabric and wood.
 2. **MPDD** [(Download)](https://github.com/stepanje/MPDD): MPDD is a dataset designed for visual defect detection in metal part manufacturing. It contains over 1,000 images.
 3. **BTAD** [(Download)](http://avires.dimi.uniud.it/papers/btad/btad.zip): BTAD (beanTech Anomaly Detection) is a dataset of real-world industrial anomalies, consisting of 2,830 images of three industrial products that exhibit body and surface defects.
