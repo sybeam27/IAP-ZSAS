@@ -21,7 +21,7 @@ Clone the repository using the following command.
      ```
    - Activate the Conda environment:
      ```bash
-     conda activate iap_zsas
+     conda activate iap-as
      ```
 This will set up the environment required to run the codebase.
 
