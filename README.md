@@ -27,6 +27,7 @@ This will set up the environment required to run the codebase.
 
 ## Datasets
 Below are the details and download links for datasets used in our experiments:
+
 [Dataset details]
 Each dataset should be stored in a folder named after the dataset (e.g., MVTec-AD/, MPDD/, BTAD/, etc.).
 
