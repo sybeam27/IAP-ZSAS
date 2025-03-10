@@ -46,7 +46,9 @@ from SegmentAnything.utils.training_utils import *
 from util.function import load_image, load_model, normalize, setup_seed, eval_zsas_last_2, \
     process_object_output, process_box_output, process_size_output, \
     process_anomaly_segmentation, process_draw_boxes, process_draw_masks, \
-    process_specify_resolution, process_anomaly_tags_2, get_anomaly_number, convert_bmp_to_png
+    process_specify_resolution, process_anomaly_tags_2, get_anomaly_number, convert_bmp_to_png, \
+    get_paths, get_main_names, process_good_phrases, get_image_and_gt_paths
+    
 # ArgumentParser 
 parser = argparse.ArgumentParser(description='Description of your program')
 parser.add_argument('--gpu', type=str, default="0", help='gpu_number')
@@ -119,18 +121,21 @@ print("-" * 50, 'MODEL LOAD COMPLETE', "-" * 50)
 print("-" * 54, 'TEST START ', "-" * 54)
 setup_seed(111)
 
-mvtec_t_list = ['carpet','leather','grid','tile','wood']
-mvtec_so_list = ['bottle','hazelnut','cable','capsule','metal_nut','pill','screw','toothbrush','transistor','zipper']
+# mvtec_t_list = ['carpet','leather','grid','tile','wood']
+# mvtec_so_list = ['bottle','hazelnut','cable','capsule','metal_nut','pill','screw','toothbrush','transistor','zipper']
 
-if dataset_name == 'mvtec':
-    main_names = mvtec_t_list + mvtec_so_list
-elif dataset_name == "mtd":
-    folder_path = './datasets/Magnetic-tile-defect-datasets./'  
-    main_names = ['Magnetic'] 
-elif dataset_name == "ksdd":
-    folder_path = './datasets/kolektaorsdd/'
-    main_names = [item for item in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, item))]
-    main_names = sorted(main_names)
+# if dataset_name == 'mvtec':
+#     main_names = mvtec_t_list + mvtec_so_list
+# elif dataset_name == "mtd":
+#     folder_path = './datasets/Magnetic-tile-defect-datasets./'  
+#     main_names = ['Magnetic'] 
+# elif dataset_name == "ksdd":
+#     folder_path = './datasets/kolektaorsdd/'
+#     main_names = [item for item in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, item))]
+#     main_names = sorted(main_names)
+
+folder_path, main_names = get_main_names(dataset_name)
+
 print(f'main_names of {dataset_name} :', main_names)
 
 root_dir = f"./result_{model_name}"
@@ -146,61 +151,79 @@ for main_name in main_names:
     
     test_imgs, gt_list, gt_mask_list, names, test_scores, test_masks = [], [], [], [], [], []
 
-    if dataset_name == 'mvtec':
-        good_folder_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test/good'
-        folder_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test'
-        sub_names = os.listdir(folder_path)
-    elif dataset_name == 'mtd':
-        good_folder_path = f'./datasets/Magnetic-tile-defect-datasets./Magnetic/MT_Free/Imgs' 
-        folder_path = f'./datasets/Magnetic-tile-defect-datasets./{main_name}'
-        sub_names = [item for item in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, item)) and item != '.git']
-        sub_names = sorted(sub_names)   
-    elif dataset_name == 'ksdd':
-        folder_path = f'./datasets/kolektaorsdd/{main_name}'
-        sub_names = [os.path.splitext(file)[0] for file in os.listdir(folder_path) if file.lower().endswith('.jpg')]      
-        sub_names = sorted(sub_names)  
+    # if dataset_name == 'mvtec':
+    #     good_folder_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test/good'
+    #     folder_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test'
+    #     sub_names = os.listdir(folder_path)
+    # elif dataset_name == 'mtd':
+    #     good_folder_path = f'./datasets/Magnetic-tile-defect-datasets./Magnetic/MT_Free/Imgs' 
+    #     folder_path = f'./datasets/Magnetic-tile-defect-datasets./{main_name}'
+    #     sub_names = [item for item in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, item)) and item != '.git']
+    #     sub_names = sorted(sub_names)   
+    # elif dataset_name == 'ksdd':
+    #     folder_path = f'./datasets/kolektaorsdd/{main_name}'
+    #     sub_names = [os.path.splitext(file)[0] for file in os.listdir(folder_path) if file.lower().endswith('.jpg')]      
+    #     sub_names = sorted(sub_names)  
+    #     with open(f'./datasets/kolektaorsdd/kolektaorsdd_anomaly.json', 'r') as json_file:
+    #         number_data = json.load(json_file)  
+    #         anomaly_number = get_anomaly_number(number_data, main_name)
+
+    good_folder_path, folder_path, sub_names = get_paths(dataset_name, main_name)
+    
+    if dataset_name == 'KSDD':
         with open(f'./datasets/kolektaorsdd/kolektaorsdd_anomaly.json', 'r') as json_file:
             number_data = json.load(json_file)  
             anomaly_number = get_anomaly_number(number_data, main_name)
-
-    if model_name == "dot_zsas":
-        if dataset_name == 'mvtec':        
-            good_phrases, good_scores = [], []
-            if len(sub_names) < random_num:
-                random_num = len(sub_names)
-            for sub_number in random.sample(sorted(os.listdir(good_folder_path)), random_num):
-                sub_number = sub_number.split(".")[0]    
-                good_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test/good/{sub_number}.png'
-                img, _, raw_img, ram_img, _, _, _ = load_image(good_path, good_path)
-                res = inference_ram(ram_img.to(DEVICE), ram_model)
-                img_tags = res[0].strip(' ').replace('  ', ' ').replace(' |', '.').replace('close-up', '').replace('number. ', '')
-                _, good_phrase, good_score, _ = process_object_output(grounding_dino_model, img, img_tags, box_threshold, text_threshold, raw_img, iou_threshold, DEVICE)
-                good_phrases += good_phrase
-                good_scores += good_score    
-        elif dataset_name == 'mtd':        
-            good_phrases, good_scores = [], []
-            for sub_number in random.sample(sorted([file for file in os.listdir(good_folder_path) if file.endswith('.jpg')]), random_num):
-                good_path = os.path.join(good_folder_path, sub_number)
-                img, _, raw_img, ram_img, _, _, _ = load_image(good_path, good_path)
-                res = inference_ram(ram_img.to(DEVICE), ram_model)
-                img_tags = res[0].strip(' ').replace('  ', ' ').replace(' |', '.').replace('close-up', '').replace('number. ', '')
-                _, good_phrase, good_score, _ = process_object_output(grounding_dino_model, img, img_tags, box_threshold, text_threshold, raw_img, iou_threshold, DEVICE)
-                good_phrases += good_phrase
-                good_scores += good_score             
-        elif dataset_name == 'ksdd':
-            good_phrases, good_scores = [], []
-            if len(sub_names) < random_num:
-                random_num = len(sub_names)
-            for sub_name in random.sample(sub_names, random_num):
-                if sub_name not in anomaly_number:
-                    good_path = os.path.join(f'./datasets/kolektaorsdd/{main_name}/{sub_name}.jpg')           
-                    img, _, raw_img, ram_img, _, _, _ = load_image(good_path, good_path)
-                    res = inference_ram(ram_img.to(DEVICE), ram_model)
-                    img_tags = res[0].strip(' ').replace('  ', ' ').replace(' |', '.').replace('close-up', '').replace('number. ', '')
-                    _, good_phrase, good_score, _ = process_object_output(grounding_dino_model, img, img_tags, box_threshold, text_threshold, raw_img, iou_threshold, DEVICE)
-                    good_phrases += good_phrase
-                    good_scores += good_score
             
+    if model_name == "dot_zsas":
+        # if dataset_name == 'mvtec':        
+        #     good_phrases, good_scores = [], []
+        #     if len(sub_names) < random_num:
+        #         random_num = len(sub_names)
+        #     for sub_number in random.sample(sorted(os.listdir(good_folder_path)), random_num):
+        #         sub_number = sub_number.split(".")[0]    
+        #         good_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test/good/{sub_number}.png'
+        #         img, _, raw_img, ram_img, _, _, _ = load_image(good_path, good_path)
+        #         res = inference_ram(ram_img.to(DEVICE), ram_model)
+        #         img_tags = res[0].strip(' ').replace('  ', ' ').replace(' |', '.').replace('close-up', '').replace('number. ', '')
+        #         _, good_phrase, good_score, _ = process_object_output(grounding_dino_model, img, img_tags, box_threshold, text_threshold, raw_img, iou_threshold, DEVICE)
+        #         good_phrases += good_phrase
+        #         good_scores += good_score    
+        # elif dataset_name == 'mtd':        
+        #     good_phrases, good_scores = [], []
+        #     for sub_number in random.sample(sorted([file for file in os.listdir(good_folder_path) if file.endswith('.jpg')]), random_num):
+        #         good_path = os.path.join(good_folder_path, sub_number)
+        #         img, _, raw_img, ram_img, _, _, _ = load_image(good_path, good_path)
+        #         res = inference_ram(ram_img.to(DEVICE), ram_model)
+        #         img_tags = res[0].strip(' ').replace('  ', ' ').replace(' |', '.').replace('close-up', '').replace('number. ', '')
+        #         _, good_phrase, good_score, _ = process_object_output(grounding_dino_model, img, img_tags, box_threshold, text_threshold, raw_img, iou_threshold, DEVICE)
+        #         good_phrases += good_phrase
+        #         good_scores += good_score             
+        # elif dataset_name == 'ksdd':
+        #     good_phrases, good_scores = [], []
+        #     if len(sub_names) < random_num:
+        #         random_num = len(sub_names)
+        #     for sub_name in random.sample(sub_names, random_num):
+        #         if sub_name not in anomaly_number:
+        #             good_path = os.path.join(f'./datasets/kolektaorsdd/{main_name}/{sub_name}.jpg')           
+        #             img, _, raw_img, ram_img, _, _, _ = load_image(good_path, good_path)
+        #             res = inference_ram(ram_img.to(DEVICE), ram_model)
+        #             img_tags = res[0].strip(' ').replace('  ', ' ').replace(' |', '.').replace('close-up', '').replace('number. ', '')
+        #             _, good_phrase, good_score, _ = process_object_output(grounding_dino_model, img, img_tags, box_threshold, text_threshold, raw_img, iou_threshold, DEVICE)
+        #             good_phrases += good_phrase
+        #             good_scores += good_score
+        
+        good_phrases, good_scores = process_good_phrases(dataset_name,
+                                                good_folder_path,
+                                                sub_names,
+                                                random_num,
+                                                main_name,
+                                                ram_model,
+                                                grounding_dino_model,
+                                                box_threshold,
+                                                text_threshold,
+                                                iou_threshold,
+                                                DEVICE)    
         top_k = 1
         good_df = pd.DataFrame({'Phrase': good_phrases, 'Score': [score.item() for score in good_scores]})
         top_df = good_df.groupby('Phrase')['Score'].max().nlargest(top_k).reset_index()
@@ -222,44 +245,59 @@ for main_name in main_names:
         # anomaly_tags = refine_anomaly_tags(object_tag, anomaly_tags) 
     
     for sub_name in tqdm(sub_names, desc="Processing"):
-        if dataset_name == 'ksdd':
-            sub_numbers = ['0.KSDD2']
-        elif dataset_name == 'mtd':
-            sub_numbers = [os.path.splitext(file)[0] for file in os.listdir(os.path.join(folder_path, sub_name,'Imgs')) if file.lower().endswith('.jpg')]
+        # if dataset_name == 'ksdd':
+        #     sub_numbers = ['0.KSDD2']
+        # elif dataset_name == 'mtd':
+        #     sub_numbers = [os.path.splitext(file)[0] for file in os.listdir(os.path.join(folder_path, sub_name,'Imgs')) if file.lower().endswith('.jpg')]
+        # else:            
+        #     sub_folder_path = os.path.join(folder_path, sub_name)
+        #     sub_numbers= sorted(os.listdir(sub_folder_path))
+        if dataset_name == 'mtd':
+            sub_numbers = [os.path.splitext(file)[0]  for file in os.listdir(os.path.join(folder_path, sub_name, 'Imgs')) if file.lower().endswith('.jpg')]
+        elif dataset_name in ['KSDD', 'KSDD2']:
+            sub_numbers = [f'0.{dataset_name}']
         else:            
-            sub_folder_path = os.path.join(folder_path, sub_name)
-            sub_numbers= sorted(os.listdir(sub_folder_path))
-
+            sub_numbers = sorted(os.listdir(os.path.join(folder_path, sub_name)))
 
         for sub_number in sub_numbers:
             sub_number = sub_number.split(".")[0]
-
-            if dataset_name == 'mvtec':
-                img_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test/{sub_name}/{sub_number}.png'
-                gt_path = img_path if sub_name == 'good' else f'./datasets/{dataset_name}_anomaly_detection/{main_name}/ground_truth/{sub_name}/{sub_number}_mask.png'
-            elif dataset_name == 'mtd':
-                img_path = f'./datasets/Magnetic-tile-defect-datasets./{main_name}/{sub_name}/Imgs/{sub_number}.jpg'
-                gt_path = f'./datasets/Magnetic-tile-defect-datasets./{main_name}/{sub_name}/Imgs/{sub_number}.png'
-            elif dataset_name == 'ksdd':
-                img_path = f'./datasets/kolektaorsdd/{main_name}/{sub_name}.jpg'
-                gt_path = f'./datasets/kolektaorsdd/{main_name}/{sub_name}_label.bmp'
-                gt_path = convert_bmp_to_png(gt_path)
+            img_path, gt_path = get_image_and_gt_paths(dataset_name, main_name, sub_name, sub_number)
+            if gt_path == None or (sub_name == 'good' and dataset_name != 'mvtec'):
+                continue
+            # if dataset_name == 'mvtec':
+            #     img_path = f'./datasets/{dataset_name}_anomaly_detection/{main_name}/test/{sub_name}/{sub_number}.png'
+            #     gt_path = img_path if sub_name == 'good' else f'./datasets/{dataset_name}_anomaly_detection/{main_name}/ground_truth/{sub_name}/{sub_number}_mask.png'
+            # elif dataset_name == 'mtd':
+            #     img_path = f'./datasets/Magnetic-tile-defect-datasets./{main_name}/{sub_name}/Imgs/{sub_number}.jpg'
+            #     gt_path = f'./datasets/Magnetic-tile-defect-datasets./{main_name}/{sub_name}/Imgs/{sub_number}.png'
+            # elif dataset_name == 'ksdd':
+            #     img_path = f'./datasets/kolektaorsdd/{main_name}/{sub_name}.jpg'
+            #     gt_path = f'./datasets/kolektaorsdd/{main_name}/{sub_name}_label.bmp'
+            #     gt_path = convert_bmp_to_png(gt_path)
 
             img, src_img, raw_img, ram_img, gt_img, gt_bn, gt_mask = load_image(img_path, gt_path)
             
             test_imgs += [np.array(src_img)]
-            if dataset_name == 'mtd':
-                gt_list += [0 if sub_name in ['MT_Free'] else 1]
-            elif dataset_name == 'ksdd':
-                if sub_name not in anomaly_number: 
-                    gt_list += [0]
-                else:
-                    gt_list += [1]
+            # if dataset_name == 'mtd':
+            #     gt_list += [0 if sub_name in ['MT_Free'] else 1]
+            # elif dataset_name == 'ksdd':
+            #     if sub_name not in anomaly_number: 
+            #         gt_list += [0]
+            #     else:
+            #         gt_list += [1]
+            # else:
+            #     gt_list += [0 if sub_name in ['good', 'Normal'] else 1]
+            if dataset_name == 'KSDD':
+                gt_list = [1 if sub_name in anomaly_number else 0]
+            elif dataset_name == 'KSDD2':
+                gt = cv2.imread(gt_path, cv2.IMREAD_GRAYSCALE)
+                gt_list = [1 if gt.sum() > 0 else 0]
             else:
-                gt_list += [0 if sub_name in ['good', 'Normal'] else 1]
-                
-            gt_img[gt_img > 0] = 1  # 255 -> 1로 변경
-            gt_mask_list += [np.array(gt_img)]
+                gt_list += [0 if sub_name in ['good', 'Normal', 'MT_Free'] else 1]  
+                              
+            # gt_img[gt_img > 0] = 1  # 255 -> 1로 변경
+            # gt_mask_list += [np.array(gt_img)]
+            gt_mask_list += [(gt_bn == 255).astype(int)]
             names += [f'{main_name}_{sub_name}_{sub_number}']
             
             # model start
