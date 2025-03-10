@@ -52,7 +52,7 @@ from utils.function import load_image, load_model, normalize, setup_seed, eval_z
 parser = argparse.ArgumentParser(description='Description of your program')
 parser.add_argument('--gpu', type=str, default="0", help='gpu_number')
 parser.add_argument('--dataset', type=str, default="mvtec", help='dataset_name')
-parser.add_argument('--model', type=str, default="dot_zsas", help='model_name')
+parser.add_argument('--model', type=str, default="iap_zsas", help='model_name')
 parser.add_argument('--box_threshold', type=float, default=0.1, help='GroundingSAM box threshold')
 parser.add_argument('--text_threshold', type=float, default=0.1, help='GroundingSAM text threshold')
 parser.add_argument('--size_threshold', type=float, default=0.8, help='Bounding-box size threshold')
