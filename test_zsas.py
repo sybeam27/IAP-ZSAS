@@ -8,7 +8,7 @@ sys.path.append('./SegmentAnything/GroundingDINO')
 sys.path.append('./SegmentAnything/SAM')
 sys.path.append('./SegmentAnything')
 sys.path.append('./Llama3')
-sys.path.append('./util')
+sys.path.append('./utils')
 
 import random
 import argparse
@@ -43,7 +43,7 @@ from SegmentAnything.utils.csv_utils import *
 from SegmentAnything.utils.eval_utils import *
 from SegmentAnything.utils.metrics import *
 from SegmentAnything.utils.training_utils import *
-from util.function import load_image, load_model, normalize, setup_seed, eval_zsas_last_2, \
+from utils.function import load_image, load_model, normalize, setup_seed, eval_zsas_last_2, \
     process_object_output, process_box_output, process_size_output, \
     process_anomaly_segmentation, process_draw_boxes, process_draw_masks, \
     process_specify_resolution, process_anomaly_tags_2, get_anomaly_number, convert_bmp_to_png, \
