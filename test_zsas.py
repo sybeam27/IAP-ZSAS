@@ -53,7 +53,7 @@ from util.function import load_image, load_model, normalize, setup_seed, eval_zs
 parser = argparse.ArgumentParser(description='Description of your program')
 parser.add_argument('--gpu', type=str, default="0", help='gpu_number')
 parser.add_argument('--dataset', type=str, default="mvtec", help='dataset_name')
-parser.add_argument('--model', type=str, default="dot_zsas", help='model_name')
+parser.add_argument('--model', type=str, default="iap_zsas", help='model_name')
 parser.add_argument('--box_threshold', type=float, default=0.1, help='GroundingSAM box threshold')
 parser.add_argument('--text_threshold', type=float, default=0.1, help='GroundingSAM text threshold')
 parser.add_argument('--size_threshold', type=float, default=0.8, help='Bounding-box size threshold')
@@ -175,7 +175,7 @@ for main_name in main_names:
             number_data = json.load(json_file)  
             anomaly_number = get_anomaly_number(number_data, main_name)
             
-    if model_name == "dot_zsas":
+    if model_name == "iap_zsas":
         # if dataset_name == 'mvtec':        
         #     good_phrases, good_scores = [], []
         #     if len(sub_names) < random_num:
@@ -301,7 +301,7 @@ for main_name in main_names:
             names += [f'{main_name}_{sub_name}_{sub_number}']
             
             # model start
-            if model_name == 'dot_zsas':
+            if model_name == 'iap_zsas':
                 object_boxes_filt, _, _, object_size = process_object_output(grounding_dino_model, img, object_tag, box_threshold, text_threshold, raw_img, iou_threshold, device=DEVICE)
                 obj_box_image = process_draw_boxes(raw_img, object_boxes_filt, object_tag)
                 
