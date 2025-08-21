@@ -84,3 +84,11 @@ We extend our gratitude to the authors of the following libraries for generously
 Your contributions are greatly appreciated.
 
 ## Citation
+@inproceedings{park2025zero,
+  title={Zero-Shot Industrial Anomaly Segmentation with Image-Aware Prompt Generation},
+  author={Park, SoYoung and Lee, Hyewon and Choi, Mingyu and Han, Seunghoon and Lee, Jong-Ryul and Lim, Sungsu and Kim, Tae-Ho},
+  booktitle={Pacific-Asia Conference on Knowledge Discovery and Data Mining},
+  pages={65--77},
+  year={2025},
+  organization={Springer}
+}
