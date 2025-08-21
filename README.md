@@ -8,7 +8,7 @@ This codebase utilizes Anaconda for managing environmental dependencies. Please 
 2. **Clone the Repository:**
 Clone the repository using the following command.
    ```bash
-   git clone https://github.com/../IAP-ZSAS.git
+   git clone https://github.com/sybeam27/IAP-ZSAS.git
    ```
 3. **Install Requirements:**
    - Navigate to the cloned repository:
